@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "ReelMate",
     "version": "2.0",
-    "description": "Your intelligent movie companion - get personalized recommendations with enhanced filtering and smart movie detection!",
+    "description": "Your intelligent movie companion - get personalized recommendations!",
     
     "permissions": [
         "contextMenus",
@@ -13,11 +13,7 @@
     ],
     
     "host_permissions": [
-        "https://api.themoviedb.org/*",
-        "https://*.imdb.com/*",
-        "https://*.themoviedb.org/*",
-        "https://*.rottentomatoes.com/*",
-        "https://*.letterboxd.com/*"
+        "https://api.themoviedb.org/*"
     ],
     
     "background": {
@@ -33,9 +29,5 @@
         "16": "icons/icon16.png",
         "48": "icons/icon48.png",
         "128": "icons/icon128.png"
-    },
-    
-    "content_security_policy": {
-        "extension_pages": "script-src 'self'; object-src 'self';"
     }
 }
