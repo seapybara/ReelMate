@@ -3,7 +3,7 @@
 🎬 ReelMate is your movie-night sidekick. Highlight any movie title on a webpage, right-click, and get smart recommendations instantly!
 
 ## Features
-- Highlight a movie title → right-click → "Find Similar Movies"
+- Highlight a movie title → right-click → "ReelMate it!"
 - Shows you 3–5 movie recommendations using the TMDB API
 - Stores selected title in Chrome Storage
 

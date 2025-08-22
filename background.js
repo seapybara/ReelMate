@@ -4,14 +4,14 @@ chrome.runtime.onInstalled.addListener(() => {
   // Create context menu for selected text
   chrome.contextMenus.create({
     id: "findSimilarMovies",
-    title: "🎬 Find Similar Movies",
+    title: "ReelMate it!",
     contexts: ["selection"]
   });
 
   // Create context menu for any page (when no text is selected)
   chrome.contextMenus.create({
     id: "openReelMate",
-    title: "🎞️ Open ReelMate",
+    title: "Open ReelMate",
     contexts: ["page"]
   });
 
