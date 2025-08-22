@@ -1,14 +1,528 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
     <meta charset="UTF-8">
     <title>ReelMate</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <h1>🎞️ ReelMate</h1>
-    <div id="movie-title">Loading...</div>
-    <div id="recommendations"></div>
-    <script src="popup.js"></script>
-  </body>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            width: 380px;
+            max-height: 600px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .movie-title {
+            padding: 15px;
+            font-size: 16px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 10px;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .recommendations {
+            padding: 0 15px 15px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 15px 0 10px 0;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .movie-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .movie-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .movie-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .movie-poster {
+            width: 60px;
+            height: 90px;
+            border-radius: 8px;
+            object-fit: cover;
+            margin-right: 12px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .movie-info {
+            flex: 1;
+        }
+
+        .movie-title-text {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+
+        .movie-details {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-bottom: 6px;
+        }
+
+        .movie-rating {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+        }
+
+        .star {
+            color: #ffd700;
+        }
+
+        .error {
+            text-align: center;
+            padding: 20px;
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+            border-radius: 10px;
+            margin: 15px;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 20px;
+            opacity: 0.7;
+        }
+
+        .filters {
+            padding: 0 15px;
+            margin-bottom: 10px;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .search-section {
+            padding: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            placeholder-color: rgba(255, 255, 255, 0.7);
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .genre-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .genre-tag {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎬 ReelMate</h1>
+        <div>Your Movie Companion</div>
+    </div>
+
+    <div id="movie-title" class="movie-title">
+        <div class="loading">
+            <div class="spinner"></div>
+            Loading...
+        </div>
+    </div>
+
+    <div class="filters" id="filters" style="display: none;">
+        <div class="section-title">Filter by:</div>
+        <div class="filter-buttons">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="recent">Recent</button>
+            <button class="filter-btn" data-filter="classic">Classic</button>
+            <button class="filter-btn" data-filter="high-rated">Top Rated</button>
+        </div>
+    </div>
+
+    <div id="recommendations" class="recommendations"></div>
+
+    <div class="search-section" id="search-section" style="display: none;">
+        <input type="text" class="search-input" placeholder="Search for another movie..." id="search-input">
+    </div>
+
+    <script>
+        const TMDB_API_KEY = "1e1f168db982c93aa1d735edee1ae51f";
+        
+        const movieTitleDiv = document.getElementById("movie-title");
+        const recommendationsDiv = document.getElementById("recommendations");
+        const filtersDiv = document.getElementById("filters");
+        const searchSection = document.getElementById("search-section");
+        const searchInput = document.getElementById("search-input");
+
+        let allRecommendations = [];
+        let currentFilter = 'all';
+
+        // Genre mapping
+        const genreMap = {
+            28: "Action", 12: "Adventure", 16: "Animation", 35: "Comedy", 80: "Crime",
+            99: "Documentary", 18: "Drama", 10751: "Family", 14: "Fantasy", 36: "History",
+            27: "Horror", 10402: "Music", 9648: "Mystery", 10749: "Romance", 878: "Sci-Fi",
+            10770: "TV Movie", 53: "Thriller", 10752: "War", 37: "Western"
+        };
+
+        async function getMovieDetails(movieId) {
+            try {
+                const response = await fetch(
+                    `https://api.themoviedb.org/3/movie/${movieId}?api_key=${TMDB_API_KEY}&append_to_response=credits`
+                );
+                return await response.json();
+            } catch (error) {
+                console.error("Error fetching movie details:", error);
+                return null;
+            }
+        }
+
+        async function getEnhancedRecommendations(movieId) {
+            try {
+                const [similarRes, recRes, movieDetails] = await Promise.all([
+                    fetch(`https://api.themoviedb.org/3/movie/${movieId}/similar?api_key=${TMDB_API_KEY}&page=1`),
+                    fetch(`https://api.themoviedb.org/3/movie/${movieId}/recommendations?api_key=${TMDB_API_KEY}&page=1`),
+                    getMovieDetails(movieId)
+                ]);
+
+                const similarData = await similarRes.json();
+                const recData = await recRes.json();
+
+                // Combine and deduplicate recommendations
+                const combinedResults = [
+                    ...similarData.results || [],
+                    ...recData.results || []
+                ];
+
+                const uniqueResults = combinedResults.reduce((acc, movie) => {
+                    if (!acc.find(m => m.id === movie.id) && movie.poster_path) {
+                        acc.push(movie);
+                    }
+                    return acc;
+                }, []);
+
+                // Score movies based on multiple factors
+                const scoredResults = uniqueResults.map(movie => {
+                    let score = 0;
+                    
+                    // Base score from vote average and vote count
+                    score += (movie.vote_average || 0) * 10;
+                    score += Math.min((movie.vote_count || 0) / 100, 50);
+                    
+                    // Bonus for recent movies (within 5 years)
+                    const movieYear = new Date(movie.release_date).getFullYear();
+                    const currentYear = new Date().getFullYear();
+                    if (currentYear - movieYear <= 5) {
+                        score += 20;
+                    }
+                    
+                    // Bonus for popularity
+                    score += Math.min((movie.popularity || 0) / 10, 30);
+
+                    return { ...movie, recommendationScore: score };
+                });
+
+                // Sort by score and return top results
+                return scoredResults
+                    .sort((a, b) => b.recommendationScore - a.recommendationScore)
+                    .slice(0, 8);
+
+            } catch (error) {
+                console.error("Error fetching recommendations:", error);
+                return [];
+            }
+        }
+
+        function filterRecommendations(recommendations, filter) {
+            const currentYear = new Date().getFullYear();
+            
+            switch (filter) {
+                case 'recent':
+                    return recommendations.filter(movie => {
+                        const year = new Date(movie.release_date).getFullYear();
+                        return currentYear - year <= 5;
+                    });
+                case 'classic':
+                    return recommendations.filter(movie => {
+                        const year = new Date(movie.release_date).getFullYear();
+                        return currentYear - year > 10;
+                    });
+                case 'high-rated':
+                    return recommendations.filter(movie => movie.vote_average >= 7.0);
+                default:
+                    return recommendations;
+            }
+        }
+
+        function displayRecommendations(recommendations) {
+            if (!recommendations.length) {
+                recommendationsDiv.innerHTML = `
+                    <div class="no-results">
+                        <div style="font-size: 24px; margin-bottom: 10px;">🎭</div>
+                        <div>No movies found for this filter</div>
+                        <div style="font-size: 12px; opacity: 0.7; margin-top: 5px;">Try a different filter</div>
+                    </div>
+                `;
+                return;
+            }
+
+            recommendationsDiv.innerHTML = `
+                <div class="section-title">Recommended for you (${recommendations.length})</div>
+                <div class="movie-grid">
+                    ${recommendations.map(movie => {
+                        const year = movie.release_date ? movie.release_date.slice(0, 4) : "N/A";
+                        const rating = movie.vote_average ? movie.vote_average.toFixed(1) : "N/A";
+                        const genres = movie.genre_ids ? 
+                            movie.genre_ids.slice(0, 2).map(id => genreMap[id]).filter(Boolean) : [];
+                        
+                        return `
+                            <div class="movie-card" onclick="openMovie(${movie.id}, '${movie.title.replace(/'/g, "\\'")}')">
+                                <img src="https://image.tmdb.org/t/p/w200${movie.poster_path}" 
+                                     alt="${movie.title}" class="movie-poster"
+                                     onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iOTAiIHZpZXdCb3g9IjAgMCA2MCA5MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjYwIiBoZWlnaHQ9IjkwIiBmaWxsPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMSkiLz4KPHN2ZyB4PSIyMCIgeT0iMzUiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJ3aGl0ZSIgb3BhY2l0eT0iMC41Ij4KPHBhdGggZD0iTTkgMTJsMy4xNCAwIDAtNEwxOCA0bC00IDQgMCA0eiIvPgo8L3N2Zz4KPC9zdmc+'" />
+                                <div class="movie-info">
+                                    <div class="movie-title-text">${movie.title}</div>
+                                    <div class="movie-details">${year} • ${movie.original_language?.toUpperCase() || 'EN'}</div>
+                                    <div class="genre-tags">
+                                        ${genres.map(genre => `<span class="genre-tag">${genre}</span>`).join('')}
+                                    </div>
+                                    <div class="movie-rating">
+                                        <span class="star">⭐</span>
+                                        <span>${rating}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        function openMovie(movieId, title) {
+            // Open TMDb page for the movie
+            chrome.tabs.create({
+                url: `https://www.themoviedb.org/movie/${movieId}`
+            });
+        }
+
+        // Filter button handlers
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('filter-btn')) {
+                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                currentFilter = e.target.dataset.filter;
+                const filtered = filterRecommendations(allRecommendations, currentFilter);
+                displayRecommendations(filtered);
+            }
+        });
+
+        // Search functionality
+        searchInput.addEventListener('input', async (e) => {
+            const query = e.target.value.trim();
+            if (query.length > 2) {
+                try {
+                    const response = await fetch(
+                        `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}`
+                    );
+                    const data = await response.json();
+                    if (data.results && data.results.length > 0) {
+                        const movie = data.results[0];
+                        chrome.storage.local.set({ selectedMovie: movie.title });
+                        // Reload with new movie
+                        location.reload();
+                    }
+                } catch (error) {
+                    console.error('Search error:', error);
+                }
+            }
+        });
+
+        // Main initialization
+        chrome.storage.local.get("selectedMovie", async (result) => {
+            const movieTitle = result.selectedMovie;
+
+            if (!movieTitle) {
+                movieTitleDiv.innerHTML = `
+                    <div style="text-align: center;">
+                        <div style="font-size: 24px; margin-bottom: 10px;">🎬</div>
+                        <div>No movie selected</div>
+                        <div style="font-size: 12px; opacity: 0.7; margin-top: 5px;">
+                            Highlight a movie title on any webpage and right-click to get started!
+                        </div>
+                    </div>
+                `;
+                searchSection.style.display = 'block';
+                return;
+            }
+
+            movieTitleDiv.innerHTML = `
+                <div style="text-align: center;">
+                    <div style="font-size: 16px; font-weight: 600; margin-bottom: 5px;">${movieTitle}</div>
+                    <div style="font-size: 12px; opacity: 0.8;">Finding similar movies...</div>
+                </div>
+            `;
+
+            try {
+                const searchRes = await fetch(
+                    `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(movieTitle)}`
+                );
+                const searchData = await searchRes.json();
+                const movie = searchData.results[0];
+
+                if (!movie) {
+                    recommendationsDiv.innerHTML = `
+                        <div class="error">
+                            <div style="font-size: 24px; margin-bottom: 10px;">😕</div>
+                            <div>Movie not found</div>
+                            <div style="font-size: 12px; margin-top: 5px;">Try searching for a different movie</div>
+                        </div>
+                    `;
+                    searchSection.style.display = 'block';
+                    return;
+                }
+
+                // Update movie title with year and rating
+                const year = movie.release_date ? movie.release_date.slice(0, 4) : "N/A";
+                const rating = movie.vote_average ? movie.vote_average.toFixed(1) : "N/A";
+                
+                movieTitleDiv.innerHTML = `
+                    <div style="text-align: center;">
+                        <div style="font-size: 16px; font-weight: 600; margin-bottom: 5px;">${movie.title}</div>
+                        <div style="font-size: 12px; opacity: 0.8;">${year} • ⭐ ${rating}</div>
+                    </div>
+                `;
+
+                // Get enhanced recommendations
+                allRecommendations = await getEnhancedRecommendations(movie.id);
+                
+                if (!allRecommendations.length) {
+                    recommendationsDiv.innerHTML = `
+                        <div class="no-results">
+                            <div style="font-size: 24px; margin-bottom: 10px;">🎭</div>
+                            <div>No recommendations found</div>
+                            <div style="font-size: 12px; opacity: 0.7; margin-top: 5px;">This movie might be too unique!</div>
+                        </div>
+                    `;
+                } else {
+                    filtersDiv.style.display = 'block';
+                    displayRecommendations(allRecommendations);
+                }
+
+                searchSection.style.display = 'block';
+
+            } catch (error) {
+                console.error("Error:", error);
+                recommendationsDiv.innerHTML = `
+                    <div class="error">
+                        <div style="font-size: 24px; margin-bottom: 10px;">⚠️</div>
+                        <div>Something went wrong</div>
+                        <div style="font-size: 12px; margin-top: 5px;">Please try again later</div>
+                    </div>
+                `;
+                searchSection.style.display = 'block';
+            }
+        });
+    </script>
+</body>
 </html>
