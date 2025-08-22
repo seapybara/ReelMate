@@ -8,7 +8,6 @@
         "contextMenus",
         "storage",
         "scripting",
-        "tabs",
         "activeTab"
     ],
     
